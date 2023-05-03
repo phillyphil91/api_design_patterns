@@ -3,7 +3,7 @@ use serde::Serialize;
 #[derive(Clone, Debug, Serialize)]
 pub struct User {
     id: i8,
-    name: String,
+    pub name: String,
     email: Option<String>,
 }
 
@@ -17,7 +17,7 @@ impl User {
 pub struct ChatRoom {
     id: i8,
     name: String,
-    members: Vec<User>,
+    pub members: Vec<User>,
 }
 
 impl ChatRoom {
