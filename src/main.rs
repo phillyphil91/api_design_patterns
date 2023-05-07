@@ -5,21 +5,21 @@ use axum::{routing::get, Router};
 
 mod handlers;
 mod types;
-use handlers::{create_chatroom, create_user, get_chatroom, list_chatrooms, list_names};
+use handlers::{create_chatroom, create_message, get_chatroom, list_chatrooms, list_messages};
 use types::AppState;
 
 #[tokio::main]
 async fn main() {
-    let state = AppState {
-        data: Arc::new(Mutex::new(HashMap::new())),
-    };
+    let state = Arc::new(Mutex::new(AppState {
+        data: HashMap::new(),
+    }));
 
     let app = Router::new()
         .route("/chatrooms", get(list_chatrooms).post(create_chatroom))
         .route("/chatrooms/:room_id", get(get_chatroom))
         .route(
-            "/chatrooms/:room_id/member",
-            get(list_names).post(create_user),
+            "/chatrooms/:room_id/messages",
+            get(list_messages).post(create_message),
         )
         .with_state(state);
 
