@@ -16,7 +16,7 @@ pub async fn get_chatroom<'a>(
     State(state): State<Arc<Mutex<AppState>>>,
 ) -> Result<Json<ChatRoom>, StatusCode> {
     let room = match state.lock().unwrap().data.get(&room_id) {
-        Some(x) => x.clone(),
+        Some(x) => x.to_owned(),
         None => return Err(StatusCode::NOT_FOUND),
     };
     Ok(Json(room))
@@ -49,8 +49,16 @@ pub async fn create_message(
     State(state): State<Arc<Mutex<AppState>>>,
     Json(payload): Json<Message>,
 ) -> Result<Json<Message>, StatusCode> {
-    match state.lock().unwrap().data.get_mut(&room_id) {
-        Some(room) => room.messages.push(payload.clone()),
+    match state
+        .lock()
+        .expect("mutex lock couln't be accquired")
+        .data
+        .get_mut(&room_id)
+    {
+        Some(room) => match &mut room.messages {
+            Some(messages) => messages.push(payload.clone()),
+            None => room.messages = Some(vec![payload.clone()]),
+        },
         None => return Err(StatusCode::NOT_FOUND),
     };
     Ok(Json(payload))
@@ -59,14 +67,33 @@ pub async fn create_message(
 pub async fn list_messages(
     Path(room_id): Path<String>,
     State(state): State<Arc<Mutex<AppState>>>,
-) -> Result<Json<Vec<Message>>, StatusCode> {
+) -> Result<Json<Option<Vec<Message>>>, StatusCode> {
     let room = match state.lock().unwrap().data.get(&room_id) {
         Some(x) => x.to_owned(),
         None => return Err(StatusCode::NOT_FOUND),
     };
-    let mut messages = Vec::new();
-    for message in room.messages {
-        messages.push(message)
+    Ok(Json(room.messages))
+}
+
+pub async fn update_chatroom(
+    Path(room_id): Path<String>,
+    State(state): State<Arc<Mutex<AppState>>>,
+    Json(payload): Json<ChatRoom>,
+) -> Result<Json<ChatRoom>, StatusCode> {
+    match state.lock().unwrap().data.get_mut(&room_id) {
+        Some(room) => *room = payload.clone(),
+        None => return Err(StatusCode::NOT_FOUND),
+    };
+    Ok(Json(payload))
+}
+
+pub async fn delete_chatroom(
+    Path(room_id): Path<String>,
+    State(state): State<Arc<Mutex<AppState>>>,
+) -> Result<(), StatusCode> {
+    if state.lock().unwrap().data.remove(&room_id).is_none() {
+        // attempting to delete a resource that doesn’t exist should result in a failure
+        return Err(StatusCode::NOT_FOUND);
     }
-    Ok(Json(messages))
+    Ok(())
 }

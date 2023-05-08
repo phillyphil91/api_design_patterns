@@ -5,7 +5,10 @@ use axum::{routing::get, Router};
 
 mod handlers;
 mod types;
-use handlers::{create_chatroom, create_message, get_chatroom, list_chatrooms, list_messages};
+use handlers::{
+    create_chatroom, create_message, delete_chatroom, get_chatroom, list_chatrooms, list_messages,
+    update_chatroom,
+};
 use types::AppState;
 
 #[tokio::main]
@@ -16,7 +19,12 @@ async fn main() {
 
     let app = Router::new()
         .route("/chatrooms", get(list_chatrooms).post(create_chatroom))
-        .route("/chatrooms/:room_id", get(get_chatroom))
+        .route(
+            "/chatrooms/:room_id",
+            get(get_chatroom)
+                .patch(update_chatroom)
+                .delete(delete_chatroom),
+        )
         .route(
             "/chatrooms/:room_id/messages",
             get(list_messages).post(create_message),

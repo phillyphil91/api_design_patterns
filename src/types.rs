@@ -6,13 +6,17 @@ use serde::{Deserialize, Serialize};
 pub struct ChatRoom {
     pub id: i8,
     pub name: String,
-    pub messages: Vec<Message>,
+    pub messages: Option<Vec<Message>>,
 }
 
 #[allow(dead_code)]
 impl ChatRoom {
     pub fn new(id: i8, name: String, messages: Vec<Message>) -> Self {
-        Self { id, name, messages }
+        Self {
+            id,
+            name,
+            messages: Some(messages),
+        }
     }
 }
 
