@@ -1,22 +1,47 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
+    http::StatusCode,
     Json,
 };
+use serde::Deserialize;
+use serde_json::Value;
+
 use std::{
     collections::hash_map::Entry,
     sync::{Arc, Mutex},
 };
 
 use crate::types::{AppState, ChatRoom, Message};
-use axum::http::StatusCode;
+
+#[derive(Deserialize)]
+pub struct QueryParams {
+    pub field_mask: Option<String>,
+}
 
 // chatroom get handler
 pub async fn get_chatroom<'a>(
     Path(room_id): Path<String>,
+    Query(query_params): Query<QueryParams>,
     State(state): State<Arc<Mutex<AppState>>>,
-) -> Result<Json<ChatRoom>, StatusCode> {
+) -> Result<Json<Value>, StatusCode> {
     let room = match state.lock().unwrap().data.get(&room_id) {
-        Some(x) => x.to_owned(),
+        Some(x) => {
+            let serialized =
+                serde_json::to_value(x).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            match query_params.field_mask {
+                Some(fields) => {
+                    let requested_field_mask: Vec<&str> = fields.split(',').collect();
+                    let mut filtered_data = serde_json::Map::new();
+                    for field in requested_field_mask {
+                        if let Some(value) = serialized.get(field) {
+                            filtered_data.insert(field.to_string(), value.clone());
+                        }
+                    }
+                    serde_json::Value::Object(filtered_data)
+                }
+                None => serialized,
+            }
+        }
         None => return Err(StatusCode::NOT_FOUND),
     };
     Ok(Json(room))
