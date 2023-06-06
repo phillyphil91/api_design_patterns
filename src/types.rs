@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct ChatRoom {
     pub id: i8,
     pub name: String,

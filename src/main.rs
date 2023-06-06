@@ -5,6 +5,10 @@ use axum::{routing::get, Router};
 
 mod handlers;
 mod types;
+
+#[cfg(test)]
+mod tests;
+
 use handlers::{
     create_chatroom, create_message, delete_chatroom, get_chatroom, list_chatrooms, list_messages,
     update_chatroom,
