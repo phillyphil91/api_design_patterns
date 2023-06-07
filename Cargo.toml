@@ -14,4 +14,4 @@ tokio = { version = "*", features = ["full"] }
 tower = "*"
 axum-macros = "0.3.7"
 reqwest = "0.11.18"
-axum-test = "9.1.0"
+axum-test-helper = "0.3.0"
